@@ -20,3 +20,6 @@ public interface VenueRepository extends JpaRepository<Venue, Long> {
 
     List<Venue> findByCapacityGreaterThanEqual(Integer minCapacity);
 }
+
+// Feature 1 Enhancement: Keyword Search
+
