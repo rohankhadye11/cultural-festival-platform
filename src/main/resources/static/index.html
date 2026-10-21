@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FestPulse | Automated Cultural Festival Schedule Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 15% 20%, #1e1b4b 0%, #0f172a 45%, #020617 100%);
+      --accent-primary: #6366f1;
+      --accent-secondary: #ec4899;
+      --accent-cyan: #06b6d4;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --badge-green: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1.5rem;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1050px;
+      width: 100%;
+    }
+
+    /* Header & Hero */
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      padding: 0.35rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #34d399;
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+    }
+
+    h1 {
+      font-size: 2.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      max-width: 650px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      padding: 1.75rem;
+      backdrop-filter: blur(16px);
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 12px 30px -10px rgba(99, 102, 241, 0.25);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .card-p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Endpoints & Links */
+    .endpoint-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0.5rem;
+      padding: 0.6rem 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+      color: #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .endpoint-chip:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent-primary);
+      color: #ffffff;
+    }
+
+    .method-tag {
+      font-weight: 700;
+      font-size: 0.72rem;
+      padding: 0.2rem 0.45rem;
+      border-radius: 0.3rem;
+    }
+
+    .get-tag { background: rgba(6, 182, 212, 0.2); color: #22d3ee; }
+    .post-tag { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .patch-tag { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    /* Tech Stack Badges */
+    .stack-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .stack-tag {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #cbd5e1;
+    }
+
+    /* Live Probe Box */
+    .probe-box {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #a5f3fc;
+      margin-top: 1rem;
+      overflow-x: auto;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 1.5rem;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="status-badge">
+        <span class="pulse-dot"></span>
+        Phase 1 Architecture & Scaffold Ready
+      </div>
+      <h1>FestPulse Platform</h1>
+      <p class="subtitle">
+        Automated Cultural Festival Schedule Platform engineered with Java 21, Spring Boot 3.3, PostgreSQL, and embedded Apache Tomcat.
+      </p>
+    </header>
+
+    <div class="grid">
+      <!-- Card 1: System Health Probe -->
+      <div class="card">
+        <div class="card-title">
+          <span>🩺</span> Live System Probe
+        </div>
+        <p class="card-p">
+          DevOps readiness check verifying Tomcat servlet container and API status.
+        </p>
+        <a class="endpoint-chip" href="/api/v1/health" target="_blank" id="probe-health-link">
+          <span>/api/v1/health</span>
+          <span class="method-tag get-tag">GET</span>
+        </a>
+        <a class="endpoint-chip" href="/api/v1/welcome" target="_blank" id="probe-welcome-link">
+          <span>/api/v1/welcome</span>
+          <span class="method-tag get-tag">GET</span>
+        </a>
+        <div class="probe-box" id="health-output">
+          // Click above or run: curl http://localhost:8080/api/v1/health
+        </div>
+      </div>
+
+      <!-- Card 2: Schedule & Conflict Engine -->
+      <div class="card">
+        <div class="card-title">
+          <span>⚡</span> Conflict Detection Engine
+        </div>
+        <p class="card-p">
+          Autonomous verification preventing physical venue collisions:
+          <code style="display:block;margin:0.5rem 0;color:#c084fc;">max(S1, S2) &lt; min(E1, E2)</code>
+        </p>
+        <a class="endpoint-chip" href="/api/v1/events" target="_blank" id="events-api-link">
+          <span>/api/v1/events</span>
+          <span class="method-tag get-tag">GET</span>
+        </a>
+        <div class="endpoint-chip">
+          <span>/api/v1/events/{id}/approve</span>
+          <span class="method-tag patch-tag">PATCH</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Engineering Architecture -->
+      <div class="card">
+        <div class="card-title">
+          <span>🏛️</span> Phase 1 Specifications
+        </div>
+        <p class="card-p">
+          Formal engineering deliverables generated in the <code>docs/</code> directory:
+        </p>
+        <ul style="list-style: none; font-size: 0.9rem; color: #cbd5e1; line-height: 1.8;">
+          <li>📄 <code>docs/01_Problem_Scope_MVP.md</code></li>
+          <li>📋 <code>docs/02_Agile_DevOps_Plan.md</code></li>
+          <li>📐 <code>docs/03_Architecture_SRS.md</code></li>
+          <li>📊 <code>docs/diagrams/*.md</code> (Mermaid.js)</li>
+        </ul>
+        <div class="stack-tags">
+          <span class="stack-tag">Java 21 LTS</span>
+          <span class="stack-tag">Spring Boot 3.3</span>
+          <span class="stack-tag">PostgreSQL 15+</span>
+          <span class="stack-tag">Tomcat :8080</span>
+          <span class="stack-tag">HikariCP</span>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      University DevOps Project &bull; Automated Cultural Festival Schedule Platform &bull; Port 8080
+    </footer>
+  </div>
+
+  <script>
+    // Asynchronously fetch live health on page load if running
+    fetch('/api/v1/health')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('health-output').innerText = JSON.stringify(data, null, 2);
+      })
+      .catch(() => {
+        document.getElementById('health-output').innerText = 'Embedded Tomcat is running. Connect to PostgreSQL to complete full health probe.';
+      });
+  </script>
+</body>
+</html>
