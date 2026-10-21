@@ -11,7 +11,7 @@
 
 > [!IMPORTANT]
 > **CRITICAL REMOTE OPERATION POLICY:**  
-> All automated agents and assistants are **strictly forbidden** from executing remote operations (`git push`, `git fetch`, `git pull`, or GitHub CLI commands). **All remote repository synchronization and GitHub Pull Requests must be performed manually by the developer** as guided in [Section 6](#6-manual-remote-synchronization--github-pull-requests).
+> All automated agents and assistants are **strictly forbidden** from executing remote operations (`git push`, `git fetch`, `git pull`, or GitHub CLI commands). **All remote repository synchronization and GitHub Pull Requests must be performed manually by the developer** as guided in [Section 7](#7-manual-remote-synchronization--github-pull-requests-user-only).
 
 ---
 
@@ -39,7 +39,7 @@ git status
 
 ## 2. Step 1: Initial Repository Baseline on `main`
 
-Ensure the initial Phase 1 foundation and newly added `.gitignore` are committed to the `main` branch before branching out.
+Ensure the initial Phase 1 foundation and the `.gitignore` are committed to the `main` branch before branching out.
 
 ```powershell
 # 1. Initialize Git repository (if not already initialized)
@@ -63,7 +63,7 @@ git status
 
 ## 3. Step 2: Task 4 — Feature Branch `feature/venue-management`
 
-In this step, you isolate all physical venue management capabilities (CRUD REST APIs, JPA repository, and controller) on its own dedicated feature branch.
+In this step, you isolate all physical venue management capabilities (CRUD REST APIs, JPA repository, service, controller, and exception handling) on its own dedicated feature branch.
 
 ```powershell
 # 1. Ensure you are branching from the clean main branch
@@ -137,7 +137,7 @@ Follow this deliberate, reproducible 5-step walkthrough:
                                /                     \
                               /                       \
         +----------------------------+   +----------------------------+
-        |  conflict-branch-A         |   |  conflict-branch-B         |
+        |  conflict-demo-alpha       |   |  conflict-demo-beta        |
         |  Change server.port to 8081|   |  Change server.port to 9090|
         +----------------------------+   +----------------------------+
                               \                       /
@@ -157,7 +157,7 @@ git checkout -b conflict-demo-alpha
 
 # 2. Modify line 9 in src/main/resources/application.properties
 # Change 'server.port=8080' to 'server.port=8081'
-# In PowerShell, you can use the command below or edit in your IDE:
+# In PowerShell, you can use the command below or edit directly in your IDE:
 (Get-Content src/main/resources/application.properties) -replace 'server.port=8080', 'server.port=8081' | Set-Content src/main/resources/application.properties
 
 # 3. Commit change on Branch A
@@ -174,7 +174,7 @@ git checkout main
 # 2. Create Branch B
 git checkout -b conflict-demo-beta
 
-# 3. Modify line 9 in src/main/resources/application.properties to a different port
+# 3. Modify line 9 in src/main/resources/application.properties to a different port (e.g. 9090)
 (Get-Content src/main/resources/application.properties) -replace 'server.port=8080', 'server.port=9090' | Set-Content src/main/resources/application.properties
 
 # 4. Commit change on Branch B
@@ -216,16 +216,16 @@ server.port=9090
 
 ### Step 5.5: Resolve and Commit the Conflict
 
-Decide on the resolved configuration (e.g., maintain default `server.port=8080` or choose `8080` with an explanatory comment):
+Decide on the resolved configuration (maintain default `server.port=8080`):
 
 ```powershell
-# 1. Edit src/main/resources/application.properties to remove all conflict markers:
+# 1. Edit src/main/resources/application.properties to remove all conflict markers.
 # Replace the conflicted section with:
 # server.port=8080
 
 (Get-Content src/main/resources/application.properties) -replace '<<<<<<< HEAD[\s\S]*?>>>>>>> conflict-demo-beta', 'server.port=8080' | Set-Content src/main/resources/application.properties
 
-# 2. Check git status to confirm both modified
+# 2. Check git status to confirm conflict resolution
 git status
 
 # 3. Stage the resolved file
