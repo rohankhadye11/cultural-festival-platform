@@ -125,8 +125,8 @@ public class SeleniumUITest {
 
         assertNotNull(pageTitle, "Page title must not be null");
         assertTrue(
-                pageTitle.contains("WrongTitleToBreakPipeline"),
-                "INTENTIONAL DEFECT (Task 10): Expected 'WrongTitleToBreakPipeline' but got: " + pageTitle
+                pageTitle.contains("FestPulse") || pageTitle.contains("Automated Cultural Festival"),
+                "Page title should contain 'FestPulse' or 'Automated Cultural Festival'. Actual title: " + pageTitle
         );
 
         // Verify the primary hero header is present in the DOM
