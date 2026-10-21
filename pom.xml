@@ -57,11 +57,11 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- H2 In-Memory Database for Isolated Test Execution in CI Pipelines -->
+		<!-- H2 In-Memory Database for Isolated Test Execution and Standalone Container Runtime -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<scope>test</scope>
+			<scope>runtime</scope>
 		</dependency>
 
 		<!-- Selenium Java for UI and Browser Automation Testing -->

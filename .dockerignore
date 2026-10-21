@@ -1,0 +1,14 @@
+.git
+.github
+docs/
+src/
+target/classes/
+target/generated-sources/
+target/maven-status/
+target/screenshots/
+target/surefire-reports/
+target/test-classes/
+*.md
+Jenkinsfile
+mvnw
+mvnw.cmd

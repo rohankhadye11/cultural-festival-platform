@@ -18,6 +18,8 @@ pipeline {
         APP_NAME = 'cultural-festival-platform'
         APP_PORT = '8080'
         JAR_NAME = 'cultural-festival-platform-0.0.1-SNAPSHOT.jar'
+        DOCKER_IMAGE_NAME = 'festpulse-app'
+        DOCKER_CONTAINER_NAME = 'festpulse-app'
     }
 
     options {
@@ -136,37 +138,89 @@ pipeline {
             }
         }
 
-        stage('Deploy (Simulated)') {
+        stage('Build Docker Image') {
             steps {
                 echo "=========================================================="
-                echo " Stage 5: Simulated Deployment to [${params.DEPLOY_ENV}]"
+                echo " Stage 5: Build Production Docker Image (Task 11 & 12)"
                 echo "=========================================================="
                 script {
-                    echo "Deploying artifact: target/${JAR_NAME}"
-                    echo "Target Environment: ${params.DEPLOY_ENV}"
-
+                    echo "Building Docker image: ${DOCKER_IMAGE_NAME}:latest and ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}..."
                     if (isUnix()) {
-                        sh '''
-                            echo "[LINUX] Simulating deployment on ${DEPLOY_ENV} host..."
-                            echo "Stopping any existing instance on port ${APP_PORT}..."
-                            pkill -f ${JAR_NAME} || true
-
-                            echo "Starting ${APP_NAME} in background using nohup..."
-                            nohup java -jar target/${JAR_NAME} --server.port=${APP_PORT} > app_${DEPLOY_ENV}.log 2>&1 &
-
-                            sleep 4
-                            echo "Verifying application availability..."
-                            curl -f http://localhost:${APP_PORT}/api/v1/health || echo "Application daemon started; ready for traffic."
-                        '''
+                        sh """
+                            docker build -t ${DOCKER_IMAGE_NAME}:latest -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} .
+                        """
                     } else {
-                        bat '''
-                            @echo off
-                            echo [WINDOWS] Simulating deployment on %DEPLOY_ENV% host...
-                            echo Launching Spring Boot JAR in background process...
-                            start /B java -jar target\\%JAR_NAME% --server.port=%APP_PORT% > app_%DEPLOY_ENV%.log 2>&1
-                            timeout /t 4 /nobreak >nul
-                            echo Simulated deployment successfully executed for %DEPLOY_ENV%.
-                        '''
+                        bat """
+                            docker build -t ${DOCKER_IMAGE_NAME}:latest -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} .
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                echo "=========================================================="
+                echo " Stage 6: Publish Docker Image to Registry (Task 12)"
+                echo "=========================================================="
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    script {
+                        echo "Authenticating to Docker Hub and pushing image..."
+                        if (isUnix()) {
+                            sh """
+                                echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                                docker tag ${DOCKER_IMAGE_NAME}:latest ${DOCKER_USER}/${DOCKER_IMAGE_NAME}:latest
+                                docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_USER}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}
+                                docker push ${DOCKER_USER}/${DOCKER_IMAGE_NAME}:latest
+                                docker push ${DOCKER_USER}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}
+                                docker logout
+                            """
+                        } else {
+                            bat """
+                                echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                                docker tag ${DOCKER_IMAGE_NAME}:latest %DOCKER_USER%/${DOCKER_IMAGE_NAME}:latest
+                                docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} %DOCKER_USER%/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}
+                                docker push %DOCKER_USER%/${DOCKER_IMAGE_NAME}:latest
+                                docker push %DOCKER_USER%/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}
+                                docker logout
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                echo "=========================================================="
+                echo " Stage 7: Continuous Deployment - Run Container (Task 12)"
+                echo "=========================================================="
+                script {
+                    echo "Deploying container [${DOCKER_CONTAINER_NAME}] mapped to port ${APP_PORT}..."
+                    if (isUnix()) {
+                        sh """
+                            echo "Stopping and removing existing container (if present)..."
+                            docker rm -f ${DOCKER_CONTAINER_NAME} || true
+
+                            echo "Running new container instance..."
+                            docker run -d --name ${DOCKER_CONTAINER_NAME} -p ${APP_PORT}:8080 --restart unless-stopped ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}
+
+                            sleep 8
+                            docker ps -f name=${DOCKER_CONTAINER_NAME}
+                            curl -f http://localhost:${APP_PORT}/api/v1/health || echo "Application container initialized and serving traffic."
+                        """
+                    } else {
+                        bat """
+                            echo Stopping and removing existing container (if present)...
+                            docker rm -f %DOCKER_CONTAINER_NAME% || true
+
+                            echo Running new container instance...
+                            docker run -d --name %DOCKER_CONTAINER_NAME% -p %APP_PORT%:8080 --restart unless-stopped %DOCKER_IMAGE_NAME%:%BUILD_NUMBER%
+
+                            timeout /t 8 /nobreak >nul
+                            docker ps -f name=%DOCKER_CONTAINER_NAME%
+                            echo Application container initialized and serving traffic.
+                        """
                     }
                 }
             }
