@@ -1,0 +1,2 @@
+FROM cytopia/ansible:latest
+COPY --from=docker:cli /usr/local/bin/docker /usr/local/bin/docker

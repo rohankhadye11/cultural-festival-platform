@@ -1,0 +1,122 @@
+---
+# ==============================================================================
+# FestPulse Automated Cultural Festival Schedule Platform
+# Ansible Continuous Deployment & Provisioning Playbook (Task 13)
+# ==============================================================================
+
+- name: Provision Target Host and Deploy FestPulse Production Container
+  hosts: production
+  become: yes
+  vars:
+    app_name: "festpulse-app"
+    image_name: "festpulse-app"
+    image_tag: "latest"
+    app_port: 8080
+    host_port: 8080
+    app_dir: "/opt/festpulse"
+    target_host: "host.docker.internal"
+    health_endpoint: "http://{{ target_host }}:8080/api/v1/health"
+    app_environment: "production"
+
+  tasks:
+    - name: 1. Display deployment target and image parameters
+      ansible.builtin.debug:
+        msg:
+          - "=========================================================="
+          - " Starting FestPulse Deployment: {{ app_name }}"
+          - " Target Node:      {{ inventory_hostname }}"
+          - " Docker Image:     {{ image_name }}:{{ image_tag }}"
+          - " Host Port:        {{ host_port }}"
+          - " App Directory:    {{ app_dir }}"
+          - " Health Endpoint:  {{ health_endpoint }}"
+          - "=========================================================="
+
+    - name: 2. Ensure prerequisite system packages are installed
+      ansible.builtin.package:
+        name:
+          - ca-certificates
+        state: present
+      ignore_errors: yes
+
+    - name: 3. Ensure dedicated application directory exists
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: 4. Create runtime environment configuration file
+      ansible.builtin.copy:
+        dest: "{{ app_dir }}/app.env"
+        content: |
+          # FestPulse Automated Environment Configuration
+          APP_NAME={{ app_name }}
+          APP_PORT={{ app_port }}
+          DEPLOY_ENV={{ app_environment }}
+          IMAGE_TAG={{ image_tag }}
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: 5. Ensure Docker image is available (pull or check local)
+      ansible.builtin.shell: |
+        docker image inspect {{ image_name }}:{{ image_tag }} >/dev/null 2>&1 || docker pull {{ image_name }}:{{ image_tag }}
+      register: docker_image_result
+      changed_when: false
+
+    - name: 6. Inspect existing application container state
+      ansible.builtin.command:
+        cmd: "docker ps -a --filter name=^/{{ app_name }}$ --format '{{ '{{' }}.Names{{ '}}' }}'"
+      register: existing_container
+      changed_when: false
+
+    - name: 7. Stop and remove existing application container (if present)
+      ansible.builtin.command:
+        cmd: "docker rm -f {{ app_name }}"
+      when: existing_container.stdout == app_name
+      register: remove_result
+      changed_when: remove_result.rc == 0
+
+    - name: 8. Start the new FestPulse application container
+      ansible.builtin.command:
+        cmd: >
+          docker run -d
+          --name {{ app_name }}
+          -p {{ host_port }}:{{ app_port }}
+          --restart unless-stopped
+          --env-file {{ app_dir }}/app.env
+          {{ image_name }}:{{ image_tag }}
+      register: docker_run_result
+      changed_when: docker_run_result.rc == 0
+
+    - name: 9. Wait for application HTTP port to become responsive
+      ansible.builtin.wait_for:
+        host: "{{ target_host }}"
+        port: "{{ host_port }}"
+        delay: 3
+        timeout: 45
+        state: started
+      ignore_errors: yes
+
+    - name: 10. Perform automated health check probe
+      ansible.builtin.uri:
+        url: "{{ health_endpoint }}"
+        method: GET
+        status_code: 200
+        return_content: yes
+      register: health_check_response
+      retries: 8
+      delay: 3
+      until: health_check_response.status == 200
+
+    - name: 11. Output deployment verification details
+      ansible.builtin.debug:
+        msg:
+          - "=========================================================="
+          - " FestPulse Deployment Verification SUCCESSFUL!"
+          - " Active Image:    {{ image_name }}:{{ image_tag }}"
+          - " Health Endpoint: {{ health_endpoint }}"
+          - " HTTP Status:     {{ health_check_response.status }}"
+          - " System Status:   {{ health_check_response.json.status | default('UP') }}"
+          - "=========================================================="
