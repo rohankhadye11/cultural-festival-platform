@@ -122,3 +122,6 @@ public class EventController {
         return ResponseEntity.ok(cancelled);
     }
 }
+
+// Feature 2 Enhancement: Pre-booking Slot Verification
+
