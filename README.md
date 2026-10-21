@@ -4,6 +4,8 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Embedded Tomcat](https://img.shields.io/badge/Server-Tomcat%2010.x%20(Port%208080)-F8DC75?logo=apachetomcat&logoColor=black)](https://tomcat.apache.org/)
+[![Jenkins CI/CD](https://img.shields.io/badge/Jenkins-Pipeline%20as%20Code-D33833?logo=jenkins&logoColor=white)](https://www.jenkins.io/)
+[![Selenium UI](https://img.shields.io/badge/Testing-Selenium%20WebDriver-43B02A?logo=selenium&logoColor=white)](https://www.selenium.dev/)
 [![Build Tool](https://img.shields.io/badge/Build-Maven%203.9%2B-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 
 ---
@@ -18,12 +20,13 @@ By replacing chaotic spreadsheets, paper signups, and unstructured group messagi
 - **Role-Based Access Control (RBAC):** Strict operational segregation across `STUDENT`, `ORGANIZER`, and `FACULTY_ADMIN`.
 - **Hard Capacity Capping:** Fire-code venue occupancy enforcement for indoor event registrations.
 - **Embedded Web Server:** Pre-configured embedded Apache Tomcat container listening on port `8080`.
+- **Continuous Integration Pipeline:** Declarative Jenkins pipeline automating build, test, artifact archiving, and simulated deployment.
 
 ---
 
 ## 2. Project Documentation Index
 
-All architectural specifications, Agile project management plans, Git collaboration procedures, and Mermaid visual models are cataloged below:
+All architectural specifications, Agile project management plans, Git collaboration procedures, CI/CD guides, and test plans are cataloged below:
 
 | Deliverable File | Description |
 | :--- | :--- |
@@ -31,6 +34,8 @@ All architectural specifications, Agile project management plans, Git collaborat
 | 📋 [`docs/02_Agile_DevOps_Plan.md`](docs/02_Agile_DevOps_Plan.md) | Agile Scrum workflow, 6-stage **Definition of Done (DoD)**, 15 User Stories with Acceptance Criteria, and Sprint roadmap. |
 | 📐 [`docs/03_Architecture_SRS.md`](docs/03_Architecture_SRS.md) | Software Requirements Specification (SRS), multi-tier architecture, PostgreSQL data schema, conflict algorithm, and REST API directory. |
 | 🛠️ [`docs/04_Git_Collaboration_Guide.md`](docs/04_Git_Collaboration_Guide.md) | **Phase 2 Git Handbook:** Step-by-step terminal commands for feature branching, deliberate merge conflict creation/resolution, and release tagging (`v1.0.0-MVP`). |
+| 🚀 [`docs/05_CI_CD_Pipeline_Guide.md`](docs/05_CI_CD_Pipeline_Guide.md) | **Phase 3 CI/CD Guide:** Jenkins installation on port 9090, GitHub webhook/polling setup, parameterized builds, and stage task mapping. |
+| 🧪 [`docs/06_Selenium_Test_Plan.md`](docs/06_Selenium_Test_Plan.md) | **Phase 3 QA Plan:** Selenium headless UI test strategy, 3 user journeys, automated screenshot mechanism, and Task 10 defect injection/resolution cycle. |
 | 🔄 [`docs/diagrams/devops_workflow.md`](docs/diagrams/devops_workflow.md) | Mermaid.js diagram illustrating the 4-phase DevOps lifecycle and CI/CD quality gate pipeline. |
 | 👤 [`docs/diagrams/use_case.md`](docs/diagrams/use_case.md) | Mermaid.js Use Case diagram and Actor-to-Capability matrix. |
 | 🏛️ [`docs/diagrams/architecture.md`](docs/diagrams/architecture.md) | Mermaid.js multi-tier component architecture and sequence flow diagram. |
@@ -42,11 +47,14 @@ All architectural specifications, Agile project management plans, Git collaborat
 ```
 cultural-festival-platform/
 ├── .gitignore                                     # Standard Git exclusions for Java/Maven/IDE
+├── Jenkinsfile                                    # Declarative CI/CD pipeline (5 stages)
 ├── docs/
 │   ├── 01_Problem_Scope_MVP.md                    # Formal problem scope & 15-task MVP freeze
 │   ├── 02_Agile_DevOps_Plan.md                    # Scrum backlog, user stories & Definition of Done
 │   ├── 03_Architecture_SRS.md                     # SRS summary, data model & REST API specification
 │   ├── 04_Git_Collaboration_Guide.md              # Branching, conflict resolution & tagging SOP
+│   ├── 05_CI_CD_Pipeline_Guide.md                 # Jenkins configuration & pipeline mapping
+│   ├── 06_Selenium_Test_Plan.md                   # Selenium strategy, user journeys & defect guide
 │   └── diagrams/
 │       ├── devops_workflow.md                     # DevOps lifecycle & CI/CD pipeline (Mermaid)
 │       ├── use_case.md                            # Actor use cases & capabilities (Mermaid)
@@ -86,8 +94,10 @@ cultural-festival-platform/
 │   │           └── index.html                     # Embedded landing page & probe dashboard
 │   └── test/
 │       └── java/com/festival/schedule/
-│           └── FestivalScheduleApplicationTests.java # Unit tests for Conflict Engine, Venue, Event
-├── pom.xml                                        # Maven project configuration (Java 21)
+│           ├── FestivalScheduleApplicationTests.java # Unit tests for Conflict Engine, Venue, Event
+│           └── ui/
+│               └── SeleniumUITest.java            # Selenium E2E test suite (3 user journeys)
+├── pom.xml                                        # Maven POM (Java 21, Spring Boot 3.3.4, Selenium 4)
 └── README.md                                      # Primary documentation & setup guide
 ```
 
@@ -99,6 +109,7 @@ cultural-festival-platform/
 1. **Java Development Kit (JDK):** Version 21 LTS installed (`java -version`).
 2. **PostgreSQL Server:** Version 15+ running locally or in Docker.
 3. **Maven:** Version 3.9+ (or use IDE Maven integration).
+4. **Google Chrome:** Installed for headless Selenium UI testing.
 
 ---
 
@@ -160,24 +171,6 @@ Or run `FestivalScheduleApplication.java` directly in your favorite IDE (Intelli
    ```bash
    curl http://localhost:8080/api/v1/events/summary
    ```
-   **Expected JSON Response:**
-   ```json
-   {
-     "totalEvents": 0,
-     "statusBreakdown": {
-       "APPROVED": 0,
-       "PENDING_APPROVAL": 0,
-       "DRAFT": 0,
-       "REJECTED": 0,
-       "CANCELLED": 0
-     },
-     "totalApproved": 0,
-     "totalPendingApproval": 0,
-     "totalRejected": 0,
-     "totalVenuesConfigured": 1,
-     "activeVenuesCount": 1
-   }
-   ```
 5. **Master Festival Events Feed:**  
    ```bash
    curl http://localhost:8080/api/v1/events
@@ -185,31 +178,32 @@ Or run `FestivalScheduleApplication.java` directly in your favorite IDE (Intelli
 
 ---
 
-### Step 5: Run Automated Unit Tests
-To execute the automated test suite verifying conflict detection algorithms, Venue CRUD, and Event summary calculations:
+### Step 5: Run Automated Unit and UI Tests
+To execute all automated unit tests and headless Selenium UI journeys:
 ```bash
 mvn test
 ```
+- **Test reports:** Generated in `target/surefire-reports/`.
+- **Failure screenshots:** Archived in `target/screenshots/` if any assertion fails.
 
 ---
 
-## 5. Technology Stack Summary
+## 5. Continuous Integration Pipeline (Jenkins)
 
-| Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Language** | Java 21 (LTS) | Type-safe, high-performance modern Java features |
-| **Framework** | Spring Boot 3.3.4 | Dependency injection, autoconfiguration, metrics |
-| **Web Container** | Embedded Apache Tomcat 10.x | Standalone servlet engine on port `8080` |
-| **Persistence** | Spring Data JPA / Hibernate ORM | Relational abstraction, JPQL, dynamic queries |
-| **Database** | PostgreSQL 15+ | ACID relational storage, indexing, constraints |
-| **Connection Pool**| HikariCP | High-performance enterprise JDBC connection pool |
-| **Testing** | JUnit 5 & Mockito | Automated unit & integration verification |
-| **Build & Package**| Apache Maven | Build lifecycle, dependency management, runnable JAR |
+The project includes a production-grade [Jenkinsfile](Jenkinsfile) defining a 5-stage declarative pipeline:
+
+1. **Checkout:** Pulls SCM source code from GitHub.
+2. **Build:** Compiles project using Java 21 and Maven.
+3. **Unit & UI Tests:** Executes all test suites and archives Surefire XML reports & screenshots.
+4. **Package:** Packages the standalone executable JAR and archives build artifacts.
+5. **Deploy (Simulated):** Simulates zero-downtime deployment to `staging` or `production` using background execution and health checks.
+
+For complete Jenkins setup instructions, consult [`docs/05_CI_CD_Pipeline_Guide.md`](docs/05_CI_CD_Pipeline_Guide.md).
 
 ---
 
 ## 6. Engineering Roadmap
 
 - **Phase 1 (Completed):** System scaffolding, domain entities, database configuration, conflict detection math engine, and architectural documentation.
-- **Phase 2 (Completed):** Source code management plan, Venue CRUD APIs, Event scheduling conflict engine, summary dashboard, and release baseline tagging guide (`v1.0.0-MVP`).
-- **Phase 3 (Upcoming):** Automated CI/CD pipeline via GitHub Actions, Docker multi-stage containerization, and staging deployment.
+- **Phase 2 (Completed):** Source code management plan, Venue CRUD APIs, Event scheduling conflict engine, summary dashboard, and release baseline tagging (`v1.0.0-MVP`).
+- **Phase 3 (Completed):** Selenium UI test suite (3 user journeys), automated failure screenshot capture, declarative `Jenkinsfile` (5 stages), CI/CD setup guide, and defect injection test plan.
