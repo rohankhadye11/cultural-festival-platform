@@ -43,9 +43,22 @@ pipeline {
                 echo "=========================================================="
                 script {
                     if (isUnix()) {
-                        sh 'mvn clean compile'
+                        sh '''
+                            if [ -f "./mvnw" ]; then
+                                chmod +x ./mvnw
+                                ./mvnw clean compile
+                            else
+                                mvn clean compile
+                            fi
+                        '''
                     } else {
-                        bat 'mvn clean compile'
+                        bat '''
+                            if exist mvnw.cmd (
+                                call mvnw.cmd clean compile
+                            ) else (
+                                call mvn clean compile
+                            )
+                        '''
                     }
                 }
             }
@@ -61,9 +74,21 @@ pipeline {
                 echo "=========================================================="
                 script {
                     if (isUnix()) {
-                        sh 'mvn test'
+                        sh '''
+                            if [ -f "./mvnw" ]; then
+                                ./mvnw test
+                            else
+                                mvn test
+                            fi
+                        '''
                     } else {
-                        bat 'mvn test'
+                        bat '''
+                            if exist mvnw.cmd (
+                                call mvnw.cmd test
+                            ) else (
+                                call mvn test
+                            )
+                        '''
                     }
                 }
             }
@@ -85,9 +110,21 @@ pipeline {
                 echo "=========================================================="
                 script {
                     if (isUnix()) {
-                        sh 'mvn package -DskipTests'
+                        sh '''
+                            if [ -f "./mvnw" ]; then
+                                ./mvnw package -DskipTests
+                            else
+                                mvn package -DskipTests
+                            fi
+                        '''
                     } else {
-                        bat 'mvn package -DskipTests'
+                        bat '''
+                            if exist mvnw.cmd (
+                                call mvnw.cmd package -DskipTests
+                            ) else (
+                                call mvn package -DskipTests
+                            )
+                        '''
                     }
                 }
             }
